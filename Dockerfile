@@ -1,20 +1,25 @@
+
 FROM node:22-alpine AS builder
 
 WORKDIR /app
 
 COPY package*.json ./
-
 RUN npm ci
 
 COPY . .
-
 RUN npm run build
 
-FROM nginxinc/nginx-unprivileged:stable-alpine
+FROM nginxinc/nginx-unprivileged:alpine
+
+COPY --from=builder /app/dist/casino-frontend/browser /usr/share/nginx/html
+
+USER root
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-COPY --from=builder /app/dist/browser /usr/share/nginx/html
+RUN chown -R nginx:nginx /etc/nginx/conf.d/
+
+USER nginx
 
 EXPOSE 8080
 
